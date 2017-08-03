@@ -67,25 +67,27 @@ if args.profile:
 	elif args.audit:
 		
 		profile = args.profile
+		output_iam(profile)
 		output_sec_group(profile)
+		public_ips = identify_public_ips(profile)
 		output_buckets(profile)
-		public_ips = identify_public_ips(profile)
 
 
-for profile_string in profile_list:
-	try:
-		profile = profile_string.split("[profile ")[1].split("]")[0]
-		output_sec_group(profile)
-		public_ips = identify_public_ips(profile)
+#for profile_string in profile_list:
+	#try:
+		#profile = profile_string.split("[profile ")[1].split("]")[0]
+		#output_sec_group(profile)
+		#public_ips = identify_public_ips(profile)
 		
-		if args.extended:
-			extended_scan(public_ips)
-		done=True
+		#if args.extended:
+		#	extended_scan(public_ips)
+		#done=True
 
 
 
-	except:
-		sys.exit(0)
+	#except:
+		#sys.exit(0)
+	sys.exit(0)
 
 if __name__ == "__main__":
     main()

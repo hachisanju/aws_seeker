@@ -5,7 +5,7 @@ from seekraux import *
 					#Identify Security Groups#
 #######################################################################
 def output_sec_group(profile):
-	print """           ,,. ,,.           
+	print bcolors.WARNING + """           ,,. ,,.           
       .******. ,******       
     .********. .********.    
    **********. .**********   
@@ -19,7 +19,7 @@ def output_sec_group(profile):
     /(******/, */*****/(,    
       ,(#(/**. .**/(#(       
           ,//* ///.     
-          """
+          """ + bcolors.ENDC
 	print "Checking Security Groups for {}\n".format(profile)
 	sec_group_output = subprocess.Popen([
     	'aws',

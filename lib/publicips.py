@@ -6,7 +6,7 @@ from seekraux import *
 #######################################################################
 
 def identify_public_ips(profile):
-	print """             *(*,            
+	print """\033[38;2;255;165;0m             *(*,            
          */**##////*,        
      .#//#(//##/////////,    
    ///#//#(//##///////////*  
@@ -20,7 +20,7 @@ def identify_public_ips(profile):
    .,,#//#(//##//////////*   
          #(//##//////*       
             .##//,           
-                          """
+                          \033[0;m"""
 	print "Checking Public Instances for {}\n".format(profile)
 	public_ip_output = subprocess.Popen([
 		'aws',

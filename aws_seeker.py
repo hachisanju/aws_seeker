@@ -58,8 +58,8 @@ if args.profile:
 	if args.monitor:
 		while True:
 			profile = args.profile
-			output_sec_group(profile)
-			public_ips = identify_public_ips(profile)
+			secgs = output_sec_group(profile)
+			public_ips = identify_public_ips(profile, secgs)
 			p = multiprocessing.Process(target=animate)
 			p.start()
 			time.sleep(300)
@@ -68,8 +68,9 @@ if args.profile:
 		
 		profile = args.profile
 		output_iam(profile)
-		output_sec_group(profile)
-		public_ips = identify_public_ips(profile)
+		secgs = output_sec_group(profile)
+
+		public_ips = identify_public_ips(profile, secgs)
 		output_buckets(profile)
 
 
@@ -89,5 +90,5 @@ if args.profile:
 		#sys.exit(0)
 	sys.exit(0)
 
-if __name__ == "__main__":
-    main()
+#if __name__ == "__main__":
+    #main()

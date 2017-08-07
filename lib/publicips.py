@@ -5,7 +5,7 @@ from seekraux import *
 						#Identify Public Ips#
 #######################################################################
 
-def identify_public_ips(profile):
+def identify_public_ips(profile, secglist):
 	print """\033[38;2;255;165;0m             *(*,            
          */**##////*,        
      .#//#(//##/////////,    
@@ -46,19 +46,41 @@ def identify_public_ips(profile):
 		'.Reservations[].Instances[].InstanceId',
 		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
+	sec_groups = subprocess.Popen([
+		'jq',
+		'.Reservations[].Instances[].SecurityGroups',
+		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+
 	ids = instance_ids.communicate(json_blob)[0]
+	groups = sec_groups.communicate(json_blob)[0]
 
 	outlist = out.splitlines()
 	idlist = ids.splitlines()
+	sec_g_list_2 = groups.split(']')
 
 	public_ips = {}
-	for i,j in zip(outlist,idlist):
+	for i,j,k in zip(outlist,idlist,sec_g_list_2):
 		if i != 'null':
+			pub_access = False
+			pub_group = False
 			i = i.translate(None, '\'\"')
 			j = j.translate(None, '\'\"')
 			public_ips[j]=i
 
 			print "{} has the public ip {}".format(j, i)
+
+			if len(secglist) > 0:
+				del secglist[-1]
+				for g,h in secglist:
+					if g in k:
+						print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] The instance has the public security group {} attached directly".format(g)
+						for p in h:
+							if p != "22":
+								print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Public access allowed to port {}".format(p)
+							elif p == "22":
+								print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] ........ Public access allowed to port 22, remediation required"
+						pub_group = True
+
 
 			shodan_check = subprocess.Popen([
 				'curl',
@@ -66,10 +88,15 @@ def identify_public_ips(profile):
 				], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 			shodan_stream = shodan_check.communicate()[0]
 			if "404 Not Found" in shodan_stream:
-				print "[" + bcolors.OKBLUE + bcolors.BOLD + u"\u2299" + bcolors.ENDC + "] ........ No hits on Shodan\n"
+				print "[" + bcolors.OKBLUE + bcolors.BOLD + u"\u2299" + bcolors.ENDC + "] ........ No hits on Shodan"
 			else:
-				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Hit on " + bcolors.UNDERLINE + "https://www.shodan.io/host/{}\n".format(i) + bcolors.ENDC
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Hit on " + bcolors.UNDERLINE + "https://www.shodan.io/host/{}".format(i) + bcolors.ENDC
 				service_check(shodan_stream)
+				pub_access = True
+			if pub_group == False and pub_access == True:
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] This instance has no directly attached public security group, but can still be reached from the anywhere on the internet"
 
-	#print public_ips
+			print ""
+
+
 	return public_ips

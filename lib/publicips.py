@@ -5,7 +5,7 @@ from seekraux import *
 						#Identify Public Ips#
 #######################################################################
 
-def identify_public_ips(profile, secglist):
+def identify_public_ips(profile, secglist, grade):
 	print """\033[38;2;255;165;0m             *(*,            
          */**##////*,        
      .#//#(//##/////////,    
@@ -71,14 +71,18 @@ def identify_public_ips(profile, secglist):
 
 			if len(secglist) > 0:
 				del secglist[-1]
-				for g,h in secglist:
+				for g,h,m in secglist:
 					if g in k:
 						print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] The instance has the public security group {} attached directly".format(g)
+						grade[1]+=2
 						for p in h:
 							if p != "22":
 								print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Public access allowed to port {}".format(p)
+								grade[0]+=3
+								grade[1]+=5
 							elif p == "22":
 								print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] ........ Public access allowed to port 22, remediation required"
+								grade[1]+=5
 						pub_group = True
 
 
@@ -89,12 +93,22 @@ def identify_public_ips(profile, secglist):
 			shodan_stream = shodan_check.communicate()[0]
 			if "404 Not Found" in shodan_stream:
 				print "[" + bcolors.OKBLUE + bcolors.BOLD + u"\u2299" + bcolors.ENDC + "] ........ No hits on Shodan"
+				grade[0]+=3
+				grade[1]+=3
 			else:
 				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Hit on " + bcolors.UNDERLINE + "https://www.shodan.io/host/{}".format(i) + bcolors.ENDC
+				grade[0]+=1
+				grade[1]+=3
 				service_check(shodan_stream)
 				pub_access = True
 			if pub_group == False and pub_access == True:
 				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] This instance has no directly attached public security group, but can still be reached from the anywhere on the internet"
+				grade[0]+=2
+				grade[1]+=3
+			elif pub_group == False and pub_access == False:
+				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] This instance is properly situated behind the virtual firewall"
+				grade[0]+=5
+				grade[1]+=5
 
 			print ""
 

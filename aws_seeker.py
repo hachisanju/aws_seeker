@@ -6,6 +6,7 @@ import argparse
 import multiprocessing
 
 from lib.iam import *
+from lib.rds import *
 from lib.buckets import *
 from lib.vulnscan import *
 from lib.seekraux import *
@@ -23,72 +24,89 @@ from lib.publicips import *
 #######################################################################
 
 #First generate the list of all profiles
-parser = argparse.ArgumentParser()
-parser.add_argument("--extended", help="perform an extended scan with nmap",
-                    action="store_true")
-parser.add_argument("--monitor", help="monitor only security groups and instances with public ip addresses",
-                    action="store_true")
-parser.add_argument("--audit", help="perform in depth analysis of several components for generating audit scores",
-                    action="store_true")
-parser.add_argument("--profile", type=str, help="perform persistent scan of a given profile")
-parser.add_argument("--email", help="send email warnings",
-                    action="store_true")
-args = parser.parse_args()
-
-profile_output = subprocess.Popen([
-	'cat',
-	'{}/.aws/config'.format(os.environ['HOME']),
-	], stdout=subprocess.PIPE)
-profile_o = profile_output.communicate()[0]
-profiles = subprocess.Popen([
-	'grep',
-	'profile',
-	], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
-profile_list= profiles.communicate(profile_o)
-
-if args.profile:
-	if args.email:
-		print "Please enter gmail username:"
-		username = raw_input()
-		print "Please enter gmail password:"
-		password = raw_input()
-		print "Please enter recepient:"
-		recepient = raw_input()
-	os.system('clear')
-	if args.monitor:
-		while True:
+def main(): 
+	#sys.stdout = Logger()
+	parser = argparse.ArgumentParser()
+	parser.add_argument("--extended", help="perform an extended scan with nmap",
+	                    action="store_true")
+	parser.add_argument("--monitor", help="monitor only security groups and instances with public ip addresses",
+	                    action="store_true")
+	parser.add_argument("--audit", help="perform in depth analysis of several components for generating audit scores",
+	                    action="store_true")
+	parser.add_argument("--profile", type=str, help="perform persistent scan of a given profile")
+	parser.add_argument("--email", help="send email warnings",
+	                    action="store_true")
+	args = parser.parse_args()
+	profile_output = subprocess.Popen([
+		'cat',
+		'{}/.aws/config'.format(os.environ['HOME']),
+		], stdout=subprocess.PIPE)
+	profile_o = profile_output.communicate()[0]
+	profiles = subprocess.Popen([
+		'grep',
+		'profile',
+		], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+	profile_list= profiles.communicate(profile_o)
+		#PREP GRADE
+	grade = [0.0, 0.0]
+	if args.profile:
+		if args.email:
+			print "Please enter gmail username:"
+			username = raw_input()
+			print "Please enter gmail password:"
+			password = raw_input()
+			print "Please enter recepient:"
+			recepient = raw_input()
+		os.system('clear')
+		if args.monitor:
+			while True:
+				profile = args.profile
+				secgs = output_sec_group(profile, grade)
+				public_ips = identify_public_ips(profile, secgs, grade)
+				p = multiprocessing.Process(target=animate)
+				p.start()
+				time.sleep(300)
+				p.terminate()
+		elif args.audit:
+			
 			profile = args.profile
-			secgs = output_sec_group(profile)
-			public_ips = identify_public_ips(profile, secgs)
-			p = multiprocessing.Process(target=animate)
-			p.start()
-			time.sleep(300)
-			p.terminate()
-	elif args.audit:
-		
-		profile = args.profile
-		output_iam(profile)
-		secgs = output_sec_group(profile)
-
-		public_ips = identify_public_ips(profile, secgs)
-		output_buckets(profile)
-
-
-#for profile_string in profile_list:
-	#try:
-		#profile = profile_string.split("[profile ")[1].split("]")[0]
-		#output_sec_group(profile)
-		#public_ips = identify_public_ips(profile)
-		
-		#if args.extended:
-		#	extended_scan(public_ips)
-		#done=True
+			output_iam(profile, grade)
+			secgs = output_sec_group(profile, grade)
+			public_ips = identify_public_ips(profile, secgs, grade)
+			output_rds(profile, secgs, grade)
+			output_buckets(profile, grade)
+			final_score = (grade[0]/grade[1])*100
+			final_score = int(final_score)
+			print "Final Score:"
+			if final_score >= 90:
+				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] A {}%".format(final_score)
+			elif final_score >= 80:
+				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] B {}%".format(final_score)
+			elif final_score >= 70:
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] C {}%".format(final_score)
+			elif final_score >= 60:
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] D {}%".format(final_score)
+			elif final_score < 60:
+				print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] F {}%".format(final_score)
+			sys.exit(0)
+	#for profile_string in profile_list:
+		#try:
+			#profile = profile_string.split("[profile ")[1].split("]")[0]
+			#output_sec_group(profile)
+			#public_ips = identify_public_ips(profile)
+			
+			#if args.extended:
+			#	extended_scan(public_ips)
+			#done=True
 
 
 
 	#except:
 		#sys.exit(0)
-	sys.exit(0)
 
-#if __name__ == "__main__":
-    #main()
+
+if __name__ == "__main__":
+	#try:
+   	main()
+    #except KeyboardInterrupt:
+    #	sys.exit()

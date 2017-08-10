@@ -4,7 +4,7 @@ from seekraux import *
 #######################################################################
 					#Identify Security Groups#
 #######################################################################
-def output_sec_group(profile):
+def output_sec_group(profile, grade):
 	print bcolors.WARNING + """           ,,. ,,.           
       .******. ,******       
     .********. .********.    
@@ -42,12 +42,17 @@ def output_sec_group(profile):
 		'jq',
 		'.SecurityGroups[].IpPermissions',
 		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+	group_id= subprocess.Popen([
+		'jq',
+		'.SecurityGroups[].GroupId',
+		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
 	out = cut_sec_groups.communicate(json_blob)[0]
 	ports = cut_sec_ports.communicate(json_blob)[0]
+	group = group_id.communicate(json_blob)[0]
 
 	sec_port_list = []
-	for i,j in zip(out.split('\n'),ports.split(']\n[')):
+	for i,j,k in zip(out.split('\n'),ports.split(']\n['),group.split('\n')):
 		port_list = []
 
 		for line in j.split('\n'):
@@ -60,16 +65,21 @@ def output_sec_group(profile):
 			for p in port_list:
 				if p != "22":
 					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Public access allowed to port {}".format(p)
+					grade[0]+=3
+					grade[1]+=4
 				elif p == "22":
 					print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] ........ Public access allowed to port 22, remediation required"
+					grade[1]+=4
 			#print "{}\n".format(out)
 			#if args.email:
 				#send_warning(profile, "Public security groups identified. Please remediate immediately.", out)
 		else:
 			print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No security groups with public rules have been identified.\n"
+			grade[1]+=3
+			grade[0]+=3
 
 		sec_port_list.append(port_list)
-	ret = zip(out.split('\n'),sec_port_list)
+	ret = zip(out.split('\n'),sec_port_list,group.split('\n'))
 	print ""
 
 	return ret

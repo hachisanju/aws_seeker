@@ -126,7 +126,7 @@ def output_buckets(profile, grade):
 		'.Contents[].Key',
 		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 		obj_list = ob.communicate(object_blob)[0].split('\n')
-		'''for o in obj_list:
+		for o in obj_list:
 			if o != "":
 				obj_acl =subprocess.Popen([
 	    			'aws',
@@ -155,7 +155,7 @@ def output_buckets(profile, grade):
 						if "WRITE" in "{}".format(ovalue):
 							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with WRITE access for ALL USERS.".format(o)
 						if "FULL_CONTROL" in "{}".format(ovalue):
-							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with FULL CONTROL for ALL USERS.".format(o)'''
+							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with FULL CONTROL for ALL USERS.".format(o)
 
 	#out = cut_s3.communicate(json_blob)[0].split('\n')
 
@@ -193,16 +193,16 @@ def output_buckets(profile, grade):
 
 				if "GetObject" in a:
 					clean = False
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains Bucket Policy with READ access for ALL USERS.".format(entry.name)
+					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with READ access for ALL USERS.".format(entry.name)
 				if "PutObject" in a:
 					clean = False
-					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an Bucket Policy with WRITE access for ALL USERS.".format(entry.name)
+					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.".format(entry.name)
 				if "*" in a:
 					clean = False
-					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an Bucket Policy with FULL CONTROL for ALL USERS.".format(entry.name)
+					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.".format(entry.name)
 
 		if clean == True:
-			print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] Bucket enforces least privelege"
+			print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] Bucket enforces least privilege"
 
 		print ""
 

@@ -149,6 +149,24 @@ def output_buckets(profile, grade):
 					ovalue = oacls.communicate(objacl[0])
 					#print value
 					if "AllUsers" in "{}".format(ovalue):
+						#EXPERIMENTAL
+						#print "Changing Object ACL."
+						#obj_acl =subprocess.Popen([
+	    				#	'aws',
+	    				#	's3api',
+	    				#	'put-object-acl',
+	    				#	'--bucket',
+	    				#	#'{}'.format(entry.replace('"', '')),
+	    				#	'{}'.format(entry.name),
+	    				#	'--profile',
+	    				#	'{}'.format(profile),
+	    				#	'--key',
+	    				#	'{}'.format(o.replace('"', '')),
+	    				#	'--acl',
+	    				#	'bucket-owner-full-control'
+	    				#], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+						#objacl = obj_acl.communicate()
+
 						clean = False
 						if "READ" in "{}".format(ovalue):
 							print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ............ {} contains an ACL with READ access for ALL USERS.".format(o)

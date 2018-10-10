@@ -1,4 +1,5 @@
 import subprocess
+import boto3
 
 from seekraux import *
 #######################################################################
@@ -6,22 +7,25 @@ from seekraux import *
 #######################################################################
 
 def identify_public_ips(profile, secglist, grade):
-	print """\033[38;2;255;165;0m             *(*,            
-         */**##////*,        
-     .#//#(//##/////////,    
-   ///#//#(//##///////////*  
-   (//#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   ///#//#(//##///////////*  
-   .,,#//#(//##//////////*   
-         #(//##//////*       
-            .##//,           
+	print """\033[38;2;255;165;0m             *(*,
+         */**##////*,
+     .#//#(//##/////////,
+   ///#//#(//##///////////*
+   (//#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   .,,#//#(//##//////////*
+         #(//##//////*
+            .##//,
                           \033[0;m"""
 	print "Checking Public Instances for {}\n".format(profile)
+
+	session = boto3.Session(profile_name='{}'.format(profile))
+	b3ses = session.client('ec2')
 	#print secglist
 	regions_output = subprocess.Popen([
     	'aws',
@@ -70,15 +74,25 @@ def identify_public_ips(profile, secglist, grade):
 			'.Reservations[].Instances[].SecurityGroups',
 			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
+		volumes = subprocess.Popen([
+			'jq',
+			'.Reservations[].Instances[].BlockDeviceMappings[].Ebs.VolumeId',
+		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+
 		ids = instance_ids.communicate(json_blob)[0]
 		groups = sec_groups.communicate(json_blob)[0]
+		vols = volumes.communicate(json_blob)[0]
+	#	print vols
 
 		outlist = out.splitlines()
 		idlist = ids.splitlines()
+		volumelist = vols.replace("\"","").splitlines()
+
+		#print volumelist
 		sec_g_list_2 = groups.split(']')
 
 		public_ips = {}
-		for i,j,k in zip(outlist,idlist,sec_g_list_2):
+		for i,j,k,v in zip(outlist,idlist,sec_g_list_2, volumelist):
 			if i != 'null':
 				pub_access = False
 				pub_group = False
@@ -86,7 +100,19 @@ def identify_public_ips(profile, secglist, grade):
 				j = j.translate(None, '\'\"')
 				public_ips[j]=i
 
+				#if v != 'null':
+					#print v
+					#response = b3ses.describe_volume_status(VolumeIds=v.replace("\"",""))
+				#	print response
+
 				print "{} has the public ip {}".format(j, i)
+				#response = b3ses.describe_volumes(VolumeIds=volumelist,Filters=[{'Name': 'attachment.instance-id','Values': ['{}'.format(j)]}])
+				#for r in response['Volumes']:
+					#print r['Encrypted']
+				#if "'Encrypted': False" in response:
+				#	print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] The instance's attached EBS volume is not encrypted"
+			#	elif "'Encrypted': True" in response:
+					#print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] The instance's attached EBS volume is encrypted"
 
 				if len(secglist) > 0:
 					#del secglist[-1]

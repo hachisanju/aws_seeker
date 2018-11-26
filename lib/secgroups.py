@@ -1,24 +1,24 @@
 import subprocess
 
-from seekraux import * 
+from seekraux import *
 #######################################################################
 					#Identify Security Groups#
 #######################################################################
 def output_sec_group(profile, grade):
-	print bcolors.WARNING + """           ,,. ,,.           
-      .******. ,******       
-    .********. .********.    
-   **********. .**********   
-  ,**********. .***********  
- .******/****. .****/******. 
- *#####( *(/*. .*((, (#####, 
- .,,,,,.  ,**. ,**.  ,,,,,,. 
- ,***********. .***********  
-  (**********. .**********/  
-   (*********. .*********(   
-    /(******/, */*****/(,    
-      ,(#(/**. .**/(#(       
-          ,//* ///.     
+	print bcolors.WARNING + """           ,,. ,,.
+      .******. ,******
+    .********. .********.
+   **********. .**********
+  ,**********. .***********
+ .******/****. .****/******.
+ *#####( *(/*. .*((, (#####,
+ .,,,,,.  ,**. ,**.  ,,,,,,.
+ ,***********. .***********
+  (**********. .**********/
+   (*********. .*********(
+    /(******/, */*****/(,
+      ,(#(/**. .**/(#(
+          ,//* ///.
           """ + bcolors.ENDC
 	print "Checking Security Groups for {}\n".format(profile)
 	#`aws ec2 describe-regions --output text | cut -f3`
@@ -41,6 +41,9 @@ def output_sec_group(profile, grade):
 	out_list = []
 	group_list = []
 	for region in regions.splitlines():
+		#if region == "ap-northeast-2" or region == "ap-southeast-1":
+			#print "skipping"
+			#continue
 		print "Checking region {}...".format(region)
 		sec_group_output = subprocess.Popen([
 	    	'aws',
@@ -87,7 +90,7 @@ def output_sec_group(profile, grade):
 			if "CidrIp" in json_blob:
 				print "Results for {}".format(i)
 				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] This security group has public access allowed on one or more ports"
-				
+
 				for entry in j.split("},"):
 					if "0.0.0.0/0" in entry:
 						#print "EXPOSED"

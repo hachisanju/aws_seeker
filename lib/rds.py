@@ -1,24 +1,24 @@
 import subprocess
 
-from seekraux import * 
+from seekraux import *
 #######################################################################
 					#Identify Security Groups#
 #######################################################################
 def output_rds(profile, secglist, grade):
-  print bcolors.OKBLUE + """      
-        ,#%(######//,        
-     /#%%%%(######/(((//     
-   ,%%#%%%%%%%%%%%%#((/(#*   
-   (%%%%%%%#######(#%%%%#(   
-   ,%%#%%%%(######/(((/(#,   
-   (%%%%%%%#######/(((((#(   
-   ,#%%%%%%%%%%%%%%%%%%##,   
-   (%%#%%%%(######/(((/(#(   
-   (%%%%%%%(######/(((##%(   
-   (%%%%%%%%%%%%%%%%%#((#(   
-     %%%%%%(######/(((/(.    
-       /#%%(######/(/*       
-           .......      
+  print bcolors.OKBLUE + """
+        ,#%(######//,
+     /#%%%%(######/(((//
+   ,%%#%%%%%%%%%%%%#((/(#*
+   (%%%%%%%#######(#%%%%#(
+   ,%%#%%%%(######/(((/(#,
+   (%%%%%%%#######/(((((#(
+   ,#%%%%%%%%%%%%%%%%%%##,
+   (%%#%%%%(######/(((/(#(
+   (%%%%%%%(######/(((##%(
+   (%%%%%%%%%%%%%%%%%#((#(
+     %%%%%%(######/(((/(.
+       /#%%(######/(/*
+           .......
           """ + bcolors.ENDC
   print "Checking RDS instances for {}\n".format(profile)
 
@@ -37,8 +37,11 @@ def output_rds(profile, secglist, grade):
     ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
   regions = cut_regions.communicate(regions_output.communicate()[0])[0]
   for region in regions.splitlines():
+    #if region == "ap-northeast-2" or region == "ap-southeast-1":
+        #print "skipping"
+        #continue
     print "Checking region {}...".format(region)
-    
+
     public_rds_output = subprocess.Popen([
       'aws',
       'rds',
@@ -50,7 +53,7 @@ def output_rds(profile, secglist, grade):
       '{}'.format(region)
       ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    json_blob = public_rds_output.communicate()[0] 
+    json_blob = public_rds_output.communicate()[0]
 
     rds_name = subprocess.Popen([
     'jq',
@@ -65,7 +68,7 @@ def output_rds(profile, secglist, grade):
     ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
     address = rds_add.communicate(json_blob)[0].split('\n')
-    
+
     rds_port = subprocess.Popen([
     'jq',
     '.DBInstances[].Endpoint.Port',
@@ -143,7 +146,6 @@ def output_rds(profile, secglist, grade):
   regions = cut_regions.communicate(regions_output.communicate()[0])[0]
   for region in regions.splitlines():
     print "Checking region {}...".format(region)
-    '''
     public_dynamodb_output = subprocess.Popen([
       'aws',
       'dynamodb',
@@ -154,20 +156,23 @@ def output_rds(profile, secglist, grade):
       '{}'.format(region)
       ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
-    json_blob = public_dynamodb_output.communicate()[0] 
+    json_blob = public_dynamodb_output.communicate()[0]
     #print(json_blob)
 
     dynamodb_name = subprocess.Popen([
     'jq',
     '.TableNames[]',
     ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+    #print dynamodb_name.communicate(json_blob)[0]
 
     names = dynamodb_name.communicate(json_blob)[0].split('\n')
-    print names
+    #print names
     for name in names:
-      print name
-      print profile
-      print region
+      if name == "":
+          continue
+      #print name
+      #print profile
+      #print region
       describe_output = subprocess.Popen([
         'aws',
         'dynamodb',
@@ -180,15 +185,34 @@ def output_rds(profile, secglist, grade):
         '{}'.format(region)
         ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
       describe_blob = describe_output.communicate()[0]
-      print (describe_blob)
-      
+      if "AccessDeniedException" in describe_blob:
+          print "Auditor does not have sufficient permissions for this audit."
+          continue
+      #print (describe_blob)
+
       arn_process = subprocess.Popen([
       'jq',
       '.Table.TableArn',
       ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
+      sse_process = subprocess.Popen([
+      'jq',
+      '.Table.SSEDescription',
+      ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+
       arn = arn_process.communicate(describe_blob)[0]
-      print (arn)'''
+      sse = sse_process.communicate(describe_blob)[0]
+      print "Evaluating controls for {}".format(arn.split('\n')[0])
+      if "ENABLED" in sse:
+          print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] ........ Storage for DB is encrypted"
+          grade[0]+=5
+          grade[1]+=5
+      else:
+          print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Storage for DB is not encrypted"
+          grade[0]+=3
+          grade[1]+=5
+
+      #print (sse)
 
     #rds_add = subprocess.Popen([
     #'jq',
@@ -196,7 +220,7 @@ def output_rds(profile, secglist, grade):
     #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
     #address = rds_add.communicate(json_blob)[0].split('\n')
-    
+
     #rds_port = subprocess.Popen([
     #'jq',
     #'.DBInstances[].Endpoint.Port',
@@ -225,4 +249,3 @@ def output_rds(profile, secglist, grade):
 
 #    securitygs = rds_secgs.communicate(json_blob)[0].split(']\n[')
   return
-

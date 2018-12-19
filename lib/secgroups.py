@@ -87,7 +87,7 @@ def output_sec_group(profile, grade):
 			#for line in j.split('\n'):
 				#if "ToPort" in line:
 					#port_list.append(line.split("ToPort\": ")[1].split(",")[0])
-			if "CidrIp" in json_blob:
+		'''	if "CidrIp" in json_blob:
 				print "Results for {}".format(i)
 				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] This security group has public access allowed on one or more ports"
 
@@ -120,9 +120,9 @@ def output_sec_group(profile, grade):
 			else:
 				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No security groups with public rules have been identified.\n"
 				grade[1]+=3
-				grade[0]+=3
-
-			sec_port_list.append(port_list)
+			grade[0]+=3
+'''
+	sec_port_list.append(port_list)
 	ret = zip(out_list,sec_port_list,group_list)
 	#print ret
 	print ""

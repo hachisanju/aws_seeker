@@ -1,0 +1,641 @@
+
+<__main__.Env_Summary instance at 0x10fc1b170>
+<__main__.Env_Summary instance at 0x10db5a170>
+<__main__.Env_Summary instance at 0x10a491170>
+usage: aws_seeker.py [-h] [--extended] [--monitor] [--audit] [--ec2] [--rds]
+                     [--s3] [--iam] [--profile PROFILE] [--list LIST]
+                     [--email]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --extended         perform an extended scan with nmap
+  --monitor          monitor only security groups and instances with public ip
+                     addresses
+  --audit            perform in depth analysis of several components for
+                     generating audit scores
+  --ec2              audit only ec2 instances (including security groups)
+  --rds              audit only rds instances (including security groups)
+  --s3               audit only s3 buckets (including acls & bucket policies)
+  --iam              audit only iam user information
+  --profile PROFILE  perform persistent scan of a given profile
+  --list LIST        scan all known profiles and provide a summary
+  --email            send email warnings
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan@mobiquityinc.com
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dnyani
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for i-085caeef095935462
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for i-085caeef095935462
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for i-085caeef095935462
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for i-085caeef095935462
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for default
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for default
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+<__main__.Env_Summary instance at 0x104601128>
+<__main__.Env_Summary instance at 0x10588a128>
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+<__main__.Env_Summary instance at 0x109a0f7e8>
+<__main__.Env_Summary instance at 0x101f68128>
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+<__main__.Env_Summary instance at 0x11035d128>
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//... ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for DCHAVAN
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for DCHAVAN
+
+
+IAM User Report:
+
+parse error: Invalid numeric literal at line 2, column 4 IAM user report:
+No information
+[93m           ,,. ,,.
+      .******. ,******
+    .********. .********.
+   **********. .**********
+  ,**********. .***********
+ .******/****. .****/******.
+ *#####( *(/*. .*((, (#####,
+ .,,,,,.  ,**. ,**.  ,,,,,,.
+ ,***********. .***********
+  (**********. .**********/
+   (*********. .*********(
+    /(******/, */*****/(,
+      ,(#(/**. .**/(#(
+          ,//* ///.
+          [0m
+Checking Security Groups for DCHAVAN
+
+Checking region ...
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for DCHAVAN
+
+
+IAM User Report:
+
+parse error: Invalid numeric literal at line 2, column 4 IAM user report:
+No information
+[93m           ,,. ,,.
+      .******. ,******
+    .********. .********.
+   **********. .**********
+  ,**********. .***********
+ .******/****. .****/******.
+ *#####( *(/*. .*((, (#####,
+ .,,,,,.  ,**. ,**.  ,,,,,,.
+ ,***********. .***********
+  (**********. .**********/
+   (*********. .*********(
+    /(******/, */*****/(,
+      ,(#(/**. .**/(#(
+          ,//* ///.
+          [0m
+Checking Security Groups for DCHAVAN
+
+Checking region ...
+Checking region The config profile (DCHAVAN) could not be found...
+
+[38;2;255;165;0m             *(*,
+         */**##////*,
+     .#//#(//##/////////,
+   ///#//#(//##///////////*
+   (//#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   .,,#//#(//##//////////*
+         #(//##//////*
+            .##//,
+                          [0;m
+Checking Public Instances for DCHAVAN
+
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+
+IAM User Report:
+
+"asedivy@mobiquityinc.com" IAM user report:
+No information
+[93m           ,,. ,,.
+      .******. ,******
+    .********. .********.
+   **********. .**********
+  ,**********. .***********
+ .******/****. .****/******.
+ *#####( *(/*. .*((, (#####,
+ .,,,,,.  ,**. ,**.  ,,,,,,.
+ ,***********. .***********
+  (**********. .**********/
+   (*********. .*********(
+    /(******/, */*****/(,
+      ,(#(/**. .**/(#(
+          ,//* ///.
+          [0m
+Checking Security Groups for dchavan
+
+Checking region ap-south-1...
+Checking region eu-west-3...
+Checking region eu-north-1...
+Checking region eu-west-2...
+Checking region eu-west-1...
+Checking region ap-northeast-2...
+Checking region ap-northeast-1...
+Checking region sa-east-1...
+Checking region ca-central-1...
+Checking region ap-southeast-1...
+Checking region ap-southeast-2...
+Checking region eu-central-1...
+Checking region us-east-1...
+Checking region us-east-2...
+Checking region us-west-1...
+Checking region us-west-2...
+
+[38;2;255;165;0m             *(*,
+         */**##////*,
+     .#//#(//##/////////,
+   ///#//#(//##///////////*
+   (//#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   .,,#//#(//##//////////*
+         #(//##//////*
+            .##//,
+                          [0;m
+Checking Public Instances for dchavan
+
+Checking region ap-south-1...
+Checking region eu-west-3...
+Checking region eu-north-1...
+Checking region eu-west-2...
+Checking region eu-west-1...
+Checking region ap-northeast-2...
+Checking region ap-northeast-1...
+Checking region sa-east-1...
+Checking region ca-central-1...
+Checking region ap-southeast-1...
+Checking region ap-southeast-2...
+Checking region eu-central-1...
+Checking region us-east-1...
+i-0102628cb377a1d6c has the public ip 34.230.66.78
+[1;32m             .,              
+         .*###(//*.          
+      .#####%%%#(((//*       
+      .###/(*. ,##(///       
+     /####//.   ##(////      
+     /####//...  ##(////      
+     .*#######(///////,      
+      .#((####(//(///*       
+          (###(///.          
+          (###(///////       
+          (###(/////,.       
+          (###(/////.        
+          (###(/,            
+          (###(//*//.        
+          (###(/////         
+           .##(/,      
+           [0m
+Checking IAM Policies for dchavan
+
+"lambda.amazonaws.com" has unrestricted DynamoDB access via the policy "acriteslambda_router_policy".
+
+IAM User Report:
+
+"asedivy@mobiquityinc.com" IAM user report:
+No information
+[93m           ,,. ,,.
+      .******. ,******
+    .********. .********.
+   **********. .**********
+  ,**********. .***********
+ .******/****. .****/******.
+ *#####( *(/*. .*((, (#####,
+ .,,,,,.  ,**. ,**.  ,,,,,,.
+ ,***********. .***********
+  (**********. .**********/
+   (*********. .*********(
+    /(******/, */*****/(,
+      ,(#(/**. .**/(#(
+          ,//* ///.
+          [0m
+Checking Security Groups for dchavan
+
+Checking region ap-south-1...
+Checking region eu-west-3...
+Checking region eu-north-1...
+Checking region eu-west-2...
+Checking region eu-west-1...
+Checking region ap-northeast-2...
+Checking region ap-northeast-1...
+Checking region sa-east-1...
+Checking region ca-central-1...
+Checking region ap-southeast-1...
+Checking region ap-southeast-2...
+Checking region eu-central-1...
+Checking region us-east-1...
+Checking region us-east-2...
+Checking region us-west-1...
+Checking region us-west-2...
+
+[38;2;255;165;0m             *(*,
+         */**##////*,
+     .#//#(//##/////////,
+   ///#//#(//##///////////*
+   (//#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   ///#//#(//##///////////*
+   .,,#//#(//##//////////*
+         #(//##//////*
+            .##//,
+                          [0;m
+Checking Public Instances for dchavan
+
+Checking region ap-south-1...
+Checking region eu-west-3...
+Checking region eu-north-1...
+Checking region eu-west-2...
+Checking region eu-west-1...
+Checking region ap-northeast-2...
+Checking region ap-northeast-1...
+Checking region sa-east-1...
+Checking region ca-central-1...
+Checking region ap-southeast-1...
+Checking region ap-southeast-2...
+Checking region eu-central-1...
+Checking region us-east-1...
+i-0102628cb377a1d6c has the public ip 34.230.66.78

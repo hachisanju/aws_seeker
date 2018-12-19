@@ -40,7 +40,7 @@ def assess_env(profile, args, grade):
 			public_ips = identify_public_ips(profile, secgs, grade)
 			p = multiprocessing.Process(target=animate)
 			p.start()
-			time.sleep(300)
+			time.sleep(3000)
 			p.terminate()
 	elif args.ec2:
 		secgs = output_sec_group(profile, grade)
@@ -62,22 +62,13 @@ def assess_env(profile, args, grade):
 		final_score = (grade[0]/grade[1])*100
 		final_score = int(final_score)
 	return profile_summary
-
-		#sys.exit(0)
-
-#######################################################################
-#'''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''''#
-#                                                                     #
-#######################################################################
+	   #sys.exit(0)
 								#Main#
-#######################################################################
-#                                                                     #
-#.....................................................................#
-#######################################################################
-
 #First generate the list of all profiles
 def main(): 
-	#sys.stdout = Logger()
+	sys.stdout = Logger()
+	
+
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--extended", help="perform an extended scan with nmap",
 	                    action="store_true")
@@ -117,19 +108,22 @@ def main():
 			print p_list
 			profile_summaries = []
 			for p in p_list:
-				print p
+				print p	
+				
+
+
 				assess_env(p, args, grade)
 
 
 
-	#if args.profile:
-		#profile = args.profile
+	if args.profile:
+		profile = args.profile
 
 	if args.profile:
 		print(assess_env(args.profile, args, grade))
 		sys.exit(0)
 
-		'''if args.email:
+		if args.email:
 			print "Please enter gmail username:"
 			username = raw_input()
 			print "Please enter gmail password:"
@@ -164,36 +158,20 @@ def main():
 			output_buckets(profile, grade)
 			final_score = (grade[0]/grade[1])*100
 			final_score = int(final_score)
-			#print "Final Score:"
-			#if final_score >= 90:
-			#	print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] A {}%".format(final_score)
-			#elif final_score >= 80:
-			#	print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] B {}%".format(final_score)
-			#elif final_score >= 70:
-			#	print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] C {}%".format(final_score)
-			#elif final_score >= 60:
-			#	print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] D {}%".format(final_score)
-			#elif final_score < 60:
-			#	print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] F {}%".format(final_score)
+			print "Final Score:"
+			if final_score >= 90:
+				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] A {}%".format(final_score)
+			elif final_score >= 80:
+				print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] B {}%".format(final_score)
+			elif final_score >= 70:
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] C {}%".format(final_score)
+			elif final_score >= 60:
+				print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] D {}%".format(final_score)
+			elif final_score < 60:
+				print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] F {}%".format(final_score)
 			sys.exit(0)
-	#for profile_string in profile_list:
-		#try:
-			#profile = profile_string.split("[profile ")[1].split("]")[0]
-			#output_sec_group(profile)
-			#public_ips = identify_public_ips(profile)
-			
-			#if args.extended:
-			#	extended_scan(public_ips)
-			#done=True
 
-
-
-	#except:''' 
-		#sys.exit(0)
 
 
 if __name__ == "__main__":
-	#try:
    	main()
-    #except KeyboardInterrupt:
-    #	sys.exit()

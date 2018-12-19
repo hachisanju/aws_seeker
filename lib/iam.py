@@ -1,3 +1,4 @@
+
 import subprocess
 import datetime
 from dateutil import parser
@@ -8,16 +9,6 @@ from seekraux import *
 
 
 def process_statements(policy_blob, entity, policy_name, policy_type):
-	#policy_name = subprocess.Popen([
-	#	'jq',
-	#	'.PolicyName',
-	#	], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-	#name = policy_name.communicate(policy_blob)[0]
-	#standardized_name = name.replace(" ","").replace("\n","")
-
-	#print standardized_name
-	#print policy_blob
-	#policy_blob = '\'' + policy_blob + '\''
 	jq_statement = subprocess.Popen([
 		'jq',
 		'{}'.format(policy_type),
@@ -41,15 +32,11 @@ def process_statements(policy_blob, entity, policy_name, policy_type):
 		'.Effect',
 		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 		e = effect.communicate(s)[0]
-		#print a
-		#print r
-		#print e
+		
 		if "dynamodb:*" in a and "*" in r and "Allow" in e:
 			#print standardized_name
 			print "{} has unrestricted DynamoDB access via the policy {}.".format(entity, policy_name)
-			#print a
-			#print r
-			#print e
+			
 
 #######################################################################
 #######################################################################
@@ -69,7 +56,7 @@ def output_iam(profile, grade, profile_summary):
       .#####%%%#(((//*       
       .###/(*. ,##(///       
      /####//.   ##(////      
-     /####//... ##(////      
+     /####//...  ##(////      
      .*#######(///////,      
       .#((####(//(///*       
           (###(///.          
@@ -147,15 +134,9 @@ def output_iam(profile, grade, profile_summary):
 				assumerole.append(appenditem.split(":")[1].replace('[','').replace(']','').replace('{','').replace('}','').replace(' ','').replace('\n', ''))
 			else:
 				assumerole.append(appenditem.split('"AWS":')[1].replace('[','').replace(']','').replace('{','').replace('}','').replace(' ','').replace('\n', ''))
-			#print assumerole
-	#print assumerole
-
+		
 
 	for n,d,ar in zip(names,details, assumerole):
-		#print ar
-		#print d
-		#if not d is details[-1]:
-			#d = d+"}"
 		if d[:1] != "{":
 			d = "{" + d
 
@@ -165,41 +146,7 @@ def output_iam(profile, grade, profile_summary):
 			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 		name = policy_name.communicate(d)[0]
 		standardized_name = name.replace(" ","").replace("\n","")
-		#print standardized_name
-		#print d
 		process_statements(d, ar ,standardized_name, ".PolicyDocument.Statement[]")
-
-		"""jq_statement = subprocess.Popen([
-			'jq',
-			'.PolicyDocument.Statement[]',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-		statement = jq_statement.communicate(d)[0]
-		for s in statement.split("}\n{"):
-
-			if s[:1] != "{":
-				s = "{" + s
-			action = subprocess.Popen([
-			'jq',
-			'.Action[]',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-			a = action.communicate(s)[0]
-			resource = subprocess.Popen([
-			'jq',
-			'.Resource',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-			r = resource.communicate(s)[0]
-			effect = subprocess.Popen([
-			'jq',
-			'.Effect',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-			e = effect.communicate(s)[0]
-			if "dynamodb:" in a and "*" in r and "Allow" in e:
-				print n
-				print standardized_name
-				print a
-				print r
-				print e"""
-
 #--------------------------------------------------------------
 #Here I'm gonna take a look at the various global account settings and see how they look
 #They'll be compared to CIS-CAT standards
@@ -264,7 +211,6 @@ def output_iam(profile, grade, profile_summary):
 	elif "\"ExpirePasswords\": false":
 		print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] Passwords do not have expiration."
 		password_policy_has_issues = True
-
 
 #--------------------------------------------------------------
 #Next up it's time to examine the IAM users individually
@@ -389,15 +335,9 @@ def output_iam(profile, grade, profile_summary):
 								'{}'.format(profile),
 								], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 							policy_blob = getuserpolicy.communicate()[0]
-							#We should do something with these policies here
-							#process_statements(policy_blob, user, pname)
-							#print policy_blob
 							if policy_blob.replace(' ','').replace('\n','') != '':
-								#print policy_blob.replace(' ','').replace('\n','')
 								print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} has a managed policy attached. Policies should typically be delegated by group.".format(user)
 								total_users_with_attached_policies += 1
-								#print policy_blob
-								#print pname
 								process_statements(policy_blob, user, pname, ".PolicyVersion.Document.Statement[]")
 
 							#print policy_blob
@@ -410,22 +350,16 @@ def output_iam(profile, grade, profile_summary):
 								if g2[:1] != "{":
 									g2 = "{" + g2
 								if g in g2:
-									#print g
-									#print g2
-									#print iu
-									#And basically do the same thing we just did for the users
+
 									grouppolicylist = subprocess.Popen([
 										'jq',
 										'.GroupPolicyList',
 										], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 									gpl = grouppolicylist.communicate(g2)[0].split("\n")[:-1]
-									#print gpl
-									#We should do something with the group policies
+
 									for gp in gpl:
 										gp = gp[1:-1]
-										#print gp
-										#if gp != 'null' and gp != '':
-											#print gp
+										
 									managedpolicylist2 = subprocess.Popen([
 										'jq',
 										'.AttachedManagedPolicies[].PolicyArn',
@@ -460,13 +394,6 @@ def output_iam(profile, grade, profile_summary):
 
 			except ValueError:
 				return
-	#profile_summary = ""
-	#password_policy_has_issues = False
-	#role_policies_have_issues = False
-	#total_users = 0
-	#total_users_with_mfa = 0
-	#total_users_with_attached_policies = 0
-	#total_default_admins = 0
 
 	users_with_mfa = (total_users_with_mfa/total_users)*100
 	admins = (total_default_admins/total_users)*100

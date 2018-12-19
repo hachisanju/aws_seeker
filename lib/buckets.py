@@ -2,9 +2,7 @@ import subprocess
 import boto3
 
 from seekraux import * 
-#######################################################################
 					#Identify S3 Buckets#
-#######################################################################
 def output_buckets(profile, grade):
 	print """\033[1;31m            *#(/,            
           #%%%((((/          
@@ -23,22 +21,22 @@ def output_buckets(profile, grade):
             .((*                                   
 \033[0m"""
 	print "Checking S3 Buckets for {}\n".format(profile)
-	#s3_output = subprocess.Popen([
-    #	'aws',
-    #	's3api',
-   # 	'list-buckets',
-    #	'--profile',
-    #	'{}'.format(profile),
-    #	], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+	s3_output = subprocess.Popen([
+    	'aws',
+    	's3api',
+    	'list-buckets',
+    	'--profile',
+    	'{}'.format(profile),
+    	], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-	#json_blob = s3_output.communicate()[0]
+	json_blob = s3_output.communicate()[0]
 
-	#cut_s3 = subprocess.Popen([
-	#	'jq',
-	#	'.Buckets[].Name',
-	#	], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+	cut_s3 = subprocess.Popen([
+		'jq',
+		'.Buckets[].Name',
+		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
 
-	#out = cut_s3.communicate(json_blob)[0].split('\n')
+	out = cut_s3.communicate(json_blob)[0].split('\n')
 
 	##NEW BOTO3 CALL METHOD:
 	session = boto3.Session(profile_name='{}'.format(profile))
@@ -55,14 +53,14 @@ def output_buckets(profile, grade):
     		's3api',
     		'get-bucket-acl',
     		'--bucket',
-    		#'{}'.format(entry.replace('"', '')),
+    		'{}'.format(entry.replace('"', '')),
     		'{}'.format(entry.name),
     		'--profile',
     		'{}'.format(profile),
     		], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 		acl = bucket_acl.communicate()
-		#acl2 = session.resource('s3').BucketAcl('{}'.format(entry)).load()
-		#print (acl2)
+		acl2 = session.resource('s3').BucketAcl('{}'.format(entry)).load()
+		print (acl2)
 		clean = True
 		for i in range(0,10):
 			
@@ -150,22 +148,22 @@ def output_buckets(profile, grade):
 					#print value
 					if "AllUsers" in "{}".format(ovalue):
 						#EXPERIMENTAL
-						#print "Changing Object ACL."
-						#obj_acl =subprocess.Popen([
-	    				#	'aws',
-	    				#	's3api',
-	    				#	'put-object-acl',
-	    				#	'--bucket',
-	    				#	#'{}'.format(entry.replace('"', '')),
-	    				#	'{}'.format(entry.name),
-	    				#	'--profile',
-	    				#	'{}'.format(profile),
-	    				#	'--key',
-	    				#	'{}'.format(o.replace('"', '')),
-	    				#	'--acl',
-	    				#	'bucket-owner-full-control'
-	    				#], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-						#objacl = obj_acl.communicate()
+						print "Changing Object ACL."
+						obj_acl =subprocess.Popen([
+	    					'aws',
+	    				 's3api',
+	    					'put-object-acl',
+	    					'--bucket',
+	    					#'{}'.format(entry.replace('"', '')),
+	    					'{}'.format(entry.name),
+	    					'--profile',
+	    				  '{}'.format(profile),
+	    					'--key',
+	    					'{}'.format(o.replace('"', '')),
+	    					'--acl',
+	    					'bucket-owner-full-control'
+	    				], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+						objacl = obj_acl.communicate()
 
 						clean = False
 						if "READ" in "{}".format(ovalue):
@@ -174,8 +172,6 @@ def output_buckets(profile, grade):
 							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with WRITE access for ALL USERS.".format(o)
 						if "FULL_CONTROL" in "{}".format(ovalue):
 							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with FULL CONTROL for ALL USERS.".format(o)
-
-	#out = cut_s3.communicate(json_blob)[0].split('\n')
 
 		bucket_policy =subprocess.Popen([
     		'aws',
@@ -237,11 +233,3 @@ def output_buckets(profile, grade):
 
 	return
 
-	#if out != '':
-		#print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] Public security groups identified. Please remediate immediately:"
-		#print "{}\n".format(out)
-		#if args.email:
-			#send_warning(profile, "Public security groups identified. Please remediate immediately.", out)
-	#else:
-		#print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No security groups with public rules have been identified.\n"
-	#return

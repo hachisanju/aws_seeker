@@ -1,11 +1,53 @@
-import subprocess
+import boto3
+from .seekraux import *
 
-from seekraux import *
-#######################################################################
-					#Identify Security Groups#
-#######################################################################
-def output_rds(profile, secglist, grade):
-  print bcolors.OKBLUE + """
+
+def dynamodb_check(session, region):
+    print('Checking region {}...'.format(region['RegionName']))
+    dynamo_client = session.client('dynamodb', region_name='{}'.format(region['RegionName']))
+
+    tables = dynamo_client.list_tables()['TableNames']
+
+    for table in tables:
+        tabledata = dynamo_client.describe_table(TableName=table)['Table']
+        print('Evaluating controls for {}'.format(table))
+        print('Table has the ARN {}'.format(tabledata['TableArn']))
+        if 'SSEDescription' in str(tabledata):
+            if tabledata['SSEDescription']['Status'] == 'ENABLED':
+                print('[' + bcolors.UNICODE_PASS_GREEN + '] ........ Storage for DB is encrypted')
+            else:
+                print('[' + bcolors.UNICODE_WARNING_2 + '] ........ Storage for DB is not encrypted')
+        else:
+            print('[' + bcolors.UNICODE_WARNING_2 + '] ........ Storage for DB is not encrypted and DB must be rebuilt to enable encryption')
+
+
+def rds_check(session, region, secglist):
+    print('Checking region {}...'.format(region['RegionName']))
+    rds_client = session.client('rds', region_name='{}'.format(region['RegionName']))
+
+    for database in rds_client.describe_db_instances()['DBInstances']:
+        print('Evaluating controls for {}'.format(database['DBInstanceIdentifier']))
+        endpoint = database['Endpoint']
+        print('[' + bcolors.UNICODE_PASS_BLUE + '] ........ DB is accessed via {}:{}'.format(endpoint['Address'], endpoint['Port']))
+        if database['StorageEncrypted'] == False:
+            print('[' + bcolors.UNICODE_WARNING_2 + '] ........ Storage for DB is not encrypted')
+        elif database['StorageEncrypted'] == True:
+            print('[' + bcolors.UNICODE_PASS_GREEN + '] ........ Storage for DB is encrypted')
+        if database['PubliclyAccessible'] == False:
+            print('[' + bcolors.UNICODE_PASS_GREEN + '] ........ DB is not externally accessible')
+        elif database['PubliclyAccessible'] == True:
+            print('[' + bcolors.UNICODE_WARNING_2 + '] ........ DB is externally accessible')
+        security_groups = database['VpcSecurityGroups']
+        for database_group in security_groups:
+            for group in secglist:
+                if group.groupId == database_group['VpcSecurityGroupId']:
+                    print('[' + bcolors.UNICODE_FAIL + '] ............ RDS instance has public security group {} attached'.format(group['GroupName']))
+
+######################################################################
+                                            #Identify Security Groups#
+######################################################################
+def output_rds(profile, secglist, region):
+    print(bcolors.OKBLUE + '''
         ,#%(######//,
      /#%%%%(######/(((//
    ,%%#%%%%%%%%%%%%#((/(#*
@@ -19,233 +61,16 @@ def output_rds(profile, secglist, grade):
      %%%%%%(######/(((/(.
        /#%%(######/(/*
            .......
-          """ + bcolors.ENDC
-  print "Checking RDS instances for {}\n".format(profile)
+          ''' + bcolors.ENDC)
+    print('Checking RDS instances for {}\n'.format(profile))
+    session = boto3.Session(profile_name='{}'.format(profile), region_name=region)
+    region_client = session.client('ec2')
+    regions = region_client.describe_regions()['Regions']
+    for region in regions:
+        rds_check(session, region, secglist)
 
-  regions_output = subprocess.Popen([
-    'aws',
-    'ec2',
-    'describe-regions',
-    '--output',
-    'text',
-    '--profile',
-    '{}'.format(profile),
-    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  cut_regions = subprocess.Popen([
-    'cut',
-    '-f3',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-  regions = cut_regions.communicate(regions_output.communicate()[0])[0]
-  for region in regions.splitlines():
-    #if region == "ap-northeast-2" or region == "ap-southeast-1":
-        #print "skipping"
-        #continue
-    print "Checking region {}...".format(region)
+    print('Checking DynamoDB tables for {}\n'.format(profile))
+    for region in regions:
+        dynamodb_check(session, region)
 
-    public_rds_output = subprocess.Popen([
-      'aws',
-      'rds',
-      'describe-db-instances',
-      '--filters',
-      '--profile',
-      '{}'.format(profile),
-      '--region',
-      '{}'.format(region)
-      ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    json_blob = public_rds_output.communicate()[0]
-
-    rds_name = subprocess.Popen([
-    'jq',
-    '.DBInstances[].DBInstanceIdentifier',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    name = rds_name.communicate(json_blob)[0].split('\n')
-
-    rds_add = subprocess.Popen([
-    'jq',
-    '.DBInstances[].Endpoint.Address',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    address = rds_add.communicate(json_blob)[0].split('\n')
-
-    rds_port = subprocess.Popen([
-    'jq',
-    '.DBInstances[].Endpoint.Port',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    port = rds_port.communicate(json_blob)[0].split('\n')
-
-    rds_enc = subprocess.Popen([
-    'jq',
-    '.DBInstances[].StorageEncrypted',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    encrypted = rds_enc.communicate(json_blob)[0].split('\n')
-
-    rds_pub = subprocess.Popen([
-    'jq',
-    '.DBInstances[].PubliclyAccessible',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    public = rds_pub.communicate(json_blob)[0].split('\n')
-
-    rds_secgs = subprocess.Popen([
-    'jq',
-    '.DBInstances[].VpcSecurityGroups',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    securitygs = rds_secgs.communicate(json_blob)[0].split(']\n[')
-    #print securitygs
-
-    for n,a,po,e,pu,s in zip(name,address,port,encrypted,public,securitygs):
-      if n != "":
-        print "Evaluating controls for {}".format(n)
-        print "[" + bcolors.OKBLUE + bcolors.BOLD + u"\u2299" + bcolors.ENDC + "] ........ DB is accessed via {}:{}".format(a.replace('"',''),po)
-        if e == "false":
-          print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Storage for DB is not encrypted"
-          grade[0]+=3
-          grade[1]+=5
-        elif e == "true":
-          print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] ........ Storage for DB is encrypted"
-          grade[0]+=5
-          grade[1]+=5
-
-        if pu == "false":
-          print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] ........ DB is not publicly accessible"
-          grade[0]+=3
-          grade[1]+=3
-        elif pu == "true":
-          print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ DB is publicly accessible"
-          grade[0]+=1
-          grade[1]+=3
-        #print secglist
-        for i,j,k in secglist:
-          if k.replace('"', '') in s and k != '':
-            print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ RDS instance has public security group attached"
-            grade[1]+=5
-      else:
-        print "No RDS instances identified."
-    print ""
-
-  print "Checking DynamoDB instances for {}\n".format(profile)
-
-  regions_output = subprocess.Popen([
-    'aws',
-    'ec2',
-    'describe-regions',
-    '--output',
-    'text',
-    '--profile',
-    '{}'.format(profile),
-    ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-  cut_regions = subprocess.Popen([
-    'cut',
-    '-f3',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-  regions = cut_regions.communicate(regions_output.communicate()[0])[0]
-  for region in regions.splitlines():
-    print "Checking region {}...".format(region)
-    public_dynamodb_output = subprocess.Popen([
-      'aws',
-      'dynamodb',
-      'list-tables',
-      '--profile',
-      '{}'.format(profile),
-      '--region',
-      '{}'.format(region)
-      ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    json_blob = public_dynamodb_output.communicate()[0]
-    #print(json_blob)
-
-    dynamodb_name = subprocess.Popen([
-    'jq',
-    '.TableNames[]',
-    ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-    #print dynamodb_name.communicate(json_blob)[0]
-
-    names = dynamodb_name.communicate(json_blob)[0].split('\n')
-    #print names
-    for name in names:
-      if name == "":
-          continue
-      #print name
-      #print profile
-      #print region
-      describe_output = subprocess.Popen([
-        'aws',
-        'dynamodb',
-        'describe-table',
-        '--table-name',
-        '{}'.format(name.replace('"', '')),
-        '--profile',
-        '{}'.format(profile),
-        '--region',
-        '{}'.format(region)
-        ], stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-      describe_blob = describe_output.communicate()[0]
-      if "AccessDeniedException" in describe_blob:
-          print "Auditor does not have sufficient permissions for this audit."
-          continue
-      #print (describe_blob)
-
-      arn_process = subprocess.Popen([
-      'jq',
-      '.Table.TableArn',
-      ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-      sse_process = subprocess.Popen([
-      'jq',
-      '.Table.SSEDescription',
-      ], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-      arn = arn_process.communicate(describe_blob)[0]
-      sse = sse_process.communicate(describe_blob)[0]
-      print "Evaluating controls for {}".format(arn.split('\n')[0])
-      if "ENABLED" in sse:
-          print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] ........ Storage for DB is encrypted"
-          grade[0]+=5
-          grade[1]+=5
-      else:
-          print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ Storage for DB is not encrypted"
-          grade[0]+=3
-          grade[1]+=5
-
-      #print (sse)
-
-    #rds_add = subprocess.Popen([
-    #'jq',
-    #'.DBInstances[].Endpoint.Address',
-    #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    #address = rds_add.communicate(json_blob)[0].split('\n')
-
-    #rds_port = subprocess.Popen([
-    #'jq',
-    #'.DBInstances[].Endpoint.Port',
-    #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    #port = rds_port.communicate(json_blob)[0].split('\n')
-
-    #rds_enc = subprocess.Popen([
-    #'jq',
-    #'.DBInstances[].StorageEncrypted',
-    #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    #encrypted = rds_enc.communicate(json_blob)[0].split('\n')
-
-    #rds_pub = subprocess.Popen([
-    #'jq',
-    #'.DBInstances[].PubliclyAccessible',
-    #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-    #public = rds_pub.communicate(json_blob)[0].split('\n')
-
-    #rds_secgs = subprocess.Popen([
-    #'jq',
-    #'.DBInstances[].VpcSecurityGroups',
-    #], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-
-#    securitygs = rds_secgs.communicate(json_blob)[0].split(']\n[')
-  return
+    return

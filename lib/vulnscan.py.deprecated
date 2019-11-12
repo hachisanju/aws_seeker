@@ -16,13 +16,13 @@ def perform_nmap(host_ip, nm):
 	#Output logging information
 	print('Host :  ({} : {})'.format( host_ip, host_name_address))
 	print('State : {}'.format(nm['{}'.format(host_ip)].state()))
-		
+
 	for proto in nm['{}'.format(host_ip)].all_protocols():
 
 		#Output logging information
 		print('----------')
 		print('Protocol : {}'.format(proto))
-		
+
 		#Identify and sort ports
 		lport = nm[host_ip][proto].keys()
 		lport.sort()
@@ -37,18 +37,18 @@ def perform_nmap(host_ip, nm):
 #######################################################################
 						#Perform SSL Labs Scan#
 #######################################################################
-#Function to execute ssllabs-scan, reporting in a reduced format. Primarily focused on the grade. Recurses once if the Hostname mismatches the CNAME
+#Function to execute ssllabs-scan, reporting in a reduced format. Recurses once if the Hostname mismatches the CNAME
 #and tries again with the CNAME. Otherwise the scan accepts the failure.
 def perform_ssllabs_scan(host_name_address, recursed):
 
-	
+
 	if not os.path.exists('{}/Experiments/ssllabs-scan/ssllabs-scan'.format(os.environ['HOME'])):
 		return "The program ssllabs-scan not installed on this system."
 
 	#Open ssllabs-scan from relative path. Ignore mismatches with SSL certificates (we will handle that here)
 	ssl_output = subprocess.Popen(['{}/Experiments/ssllabs-scan/ssllabs-scan'.format(os.environ['HOME']), '--ignore-mismatch', '{}'.format(host_name_address)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-	
-	
+
+
 	#Initialize local variables.
 	criteria = ["\"protocol\"", "grade", "hasWarnings", "vulnBeast", "stsStatus", "supportsRc4", "rc4WithModern","rc4Only", "heartbleed","heartbeat","poodle","fallback","freak","statusMessage"]
 	ssllabs_scan_result = ""
@@ -59,7 +59,7 @@ def perform_ssllabs_scan(host_name_address, recursed):
 	if recursed == False:
 		print('----------')
 		print('SSL Labs Evaluaion:')
-	
+
 	for line in ssl_output.stdout:
 		#Print the criteria we are looking for, and only that criteria.
 		if any(c in line for c in criteria):
@@ -94,7 +94,7 @@ def perform_ssllabs_scan(host_name_address, recursed):
 #######################################################################
 def extended_scan(public_ips):
 
-	
+
 	port_arg = """-p 1-1024,1200,1234,1434,1471,1604,1723,1900,1911,1962,2067,
 	2082,2083,2086,2087,2123,2152,2323,2375,2376,2404,2455,2628,3000,3128,3306,
 	3386,3388,3389,3479,3780,3790,4022,4040,4369,4443,4500,4911,4949,5000,5001,
@@ -117,10 +117,10 @@ def extended_scan(public_ips):
 	#Iterate over both IPs and instance names together
 	for host_name, host_ip in public_ips.iteritems():
 
-		
+
 		#Initiate initial nmap scan with given arguments
 		print "Scanning {} over the IP address {}".format(host_name, host_ip)
-		
+
 		nm.scan(hosts=host_ip, arguments='-Pn {}'.format(port_arg[0]))
 		#p = multiprocessing.Process(target=nm.scan,args=(hosts=host_ip, arguments='-Pn {}'.format(port_arg[0])))
 
@@ -140,6 +140,6 @@ def extended_scan(public_ips):
 			print "\n"
 
 
-		#Exception is thrown if nmap cannot find the host.		
+		#Exception is thrown if nmap cannot find the host.
 		except KeyError as e:
 			print('Host \"{}\" ({}) looks down from here.\n'.format(host_name, host_ip))

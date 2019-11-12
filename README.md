@@ -8,3 +8,15 @@ This application is READ ONLY but can be executed by any IAM user with READ or W
 
 ./aws_seeker --audit --profile <PROFILE_NAME> is the preferred invocation. This reports all criteria directly to your command line. --audit can be replaced with --monitor, which will consistently assess security groups and ec2 instances every 5 minutes. For now, every other flag should not be used.
 
+## Running seeker
+In order to run seeker you must have `pipenv` installed. This can be installed on MAC OS X via `brew install pipenv`
+Once you have `pipenv` you can run the following commands to set up your runtime environment to match this project
+```
+pipenv lock
+pipenv sync
+```
+
+Then you can run seeker using the following syntax
+```
+pipenv run python aws_seeker.py --audit --profile profile_name
+```

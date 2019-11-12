@@ -1,247 +1,222 @@
-import subprocess
 import boto3
+from .seekraux import *
+from ast import literal_eval
 
-from seekraux import * 
+#CLIENT = boto3.client('s3')
+
 #######################################################################
-					#Identify S3 Buckets#
+                    #Identify S3 Buckets#
 #######################################################################
-def output_buckets(profile, grade):
-	print """\033[1;31m            *#(/,            
-          #%%%((((/          
-   ..     #%%%((((/    ...   
-  #%((((((%%%%(((((#%%%%#(*  
-  #%(((((((#%%&&%%%%%%%%#(*  
-  #%(((((((((####%%%%%%%#(*  
-  #%((((((%%%%(((((%%%%%#(*  
-  #%((((((%%%%(((((%%%%%#(*  
-  #%((((((%%%%(((((%%%%%#(*  
-  #%((((((((((#%%%%%%%%%#(*  
-  #%((((((/**,,,*/(%%%%%#(*  
-  #%(((((*%%%%(((((/#%%%#(*  
-          #%%%((((/          
-          #%%%((((/          
-            .((*                                   
-\033[0m"""
-	print "Checking S3 Buckets for {}\n".format(profile)
-	#s3_output = subprocess.Popen([
-    #	'aws',
-    #	's3api',
-   # 	'list-buckets',
-    #	'--profile',
-    #	'{}'.format(profile),
-    #	], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+def output_buckets(profile, region):
+    print('''\033[1;31m            *#(/,
+          #%%%((((/
+   ..     #%%%((((/    ...
+  #%((((((%%%%(((((#%%%%#(*
+  #%(((((((#%%&&%%%%%%%%#(*
+  #%(((((((((####%%%%%%%#(*
+  #%((((((%%%%(((((%%%%%#(*
+  #%((((((%%%%(((((%%%%%#(*
+  #%((((((%%%%(((((%%%%%#(*
+  #%((((((((((#%%%%%%%%%#(*
+  #%((((((/**,,,*/(%%%%%#(*
+  #%(((((*%%%%(((((/#%%%#(*
+          #%%%((((/
+          #%%%((((/
+            .((*
+\033[0m''')
+    print('Checking S3 Buckets for {}\n'.format(profile))
 
-	#json_blob = s3_output.communicate()[0]
+    session = boto3.Session(profile_name='{}'.format(profile), region_name=region)
+    s3_client = session.client('s3')
 
-	#cut_s3 = subprocess.Popen([
-	#	'jq',
-	#	'.Buckets[].Name',
-	#	], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
+    all_buckets = s3_client.list_buckets().get('Buckets')
 
-	#out = cut_s3.communicate(json_blob)[0].split('\n')
+    violating_buckets = []
+    violating_objects = []
+    for bucket in all_buckets:
+        print('Checking https://s3.amazonaws.com/' + bucket.get('Name'))
+        acl = get_violating_buckets(bucket, s3_client)
+        policy = get_violating_bucket_policies(bucket, s3_client)
+        if acl or policy:
+            violating_buckets.append(bucket)
+            try:
+                for obj in s3_client.list_objects_v2(Bucket=bucket.get('Name'),MaxKeys=1).get('Contents'):
+                    print('Check objects directly')
+                    print(obj.get('Key'))
+            except Exception as e:
+                print('    ........ Could not find or access any objects')
+        get_violating_objects(bucket, s3_client)
 
-	##NEW BOTO3 CALL METHOD:
-	session = boto3.Session(profile_name='{}'.format(profile))
-	out = session.resource('s3').buckets.all()
-	#MUCH SIMPLER
+    #list_violating_acls(violating_objects)
 
-	anywarnings = False
-	bacl = False
-	bpolicy = False
-	for entry in out:
-		print "Evaluating ACLs and Bucket Policy for {}".format(entry.name)
-		bucket_acl =subprocess.Popen([
-    		'aws',
-    		's3api',
-    		'get-bucket-acl',
-    		'--bucket',
-    		#'{}'.format(entry.replace('"', '')),
-    		'{}'.format(entry.name),
-    		'--profile',
-    		'{}'.format(profile),
-    		], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-		acl = bucket_acl.communicate()
-		#acl2 = session.resource('s3').BucketAcl('{}'.format(entry)).load()
-		#print (acl2)
-		clean = True
-		for i in range(0,10):
-			
-			acls = subprocess.Popen([
-				'jq',
-				'.Grants[{}]'.format(i),
-				], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-			value = acls.communicate(acl[0])
-				#print value
-			if "AllUsers" in "{}".format(value):
-				anywarnings = True
-				bacl = True
-				clean = False
-				if "READ" in "{}".format(value):
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an ACL with READ access for ALL USERS.".format(entry.name)
-					grade[0]+=2
-					grade[1]+=3
-				if "WRITE" in "{}".format(value):
-					print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ........ {} contains an ACL with WRITE access for ALL USERS.".format(entry.name)
-					grade[1]+=5
-				if "FULL_CONTROL" in "{}".format(value):
-					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an ACL with FULL CONTROL for ALL USERS.".format(entry.name)
-					grade[1]+=5
-			if "AuthenticatedUsers" in "{}".format(value):
-				anywarnings = True
-				clean = False
-				if "READ" in "{}".format(value):
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an ACL with READ access for users within the console.".format(entry.name)
-					grade[0]+=2
-					grade[1]+=3
-				if "WRITE" in "{}".format(value):
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an ACL with WRITE access for users within the console.".format(entry.name)
-					grade[0]+=2
-					grade[1]+=3
-				if "FULL_CONTROL" in "{}".format(value):
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains an ACL with FULL CONTROL for users within the console.".format(entry.name)
-					grade[0]+=2
-					grade[1]+=3
-		
-					#i += 1
-			#except:
-				#break
-		#aws s3api list-objects
-		objects =subprocess.Popen([
-    		'aws',
-    		's3api',
-    		'list-objects-v2',
-    		'--bucket',
-    		#'{}'.format(entry.replace('"', '')),
-    		'{}'.format(entry.name),
-    		'--profile',
-    		'{}'.format(profile),
-    		"--max-items",
-    		"50",
-    		], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-		#print
-		object_blob = objects.communicate()[0]
-		#print object_blob
-		ob = subprocess.Popen([
-		'jq',
-		'.Contents[].Key',
-		], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-		obj_list = ob.communicate(object_blob)[0].split('\n')
-		for o in obj_list:
-			if o != "":
-				obj_acl =subprocess.Popen([
-	    			'aws',
-	    			's3api',
-	    			'get-object-acl',
-	    			'--bucket',
-	    			#'{}'.format(entry.replace('"', '')),
-	    			'{}'.format(entry.name),
-	    			'--profile',
-	    			'{}'.format(profile),
-	    			'--key',
-	    			'{}'.format(o.replace('"', '')),
-	    		], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-				objacl = obj_acl.communicate()
-				for i in range(0,10):
-					oacls = subprocess.Popen([
-						'jq',
-						'.Grants[{}]'.format(i),
-						], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-					ovalue = oacls.communicate(objacl[0])
-					#print value
-					if "AllUsers" in "{}".format(ovalue):
-						#EXPERIMENTAL
-						#print "Changing Object ACL."
-						#obj_acl =subprocess.Popen([
-	    				#	'aws',
-	    				#	's3api',
-	    				#	'put-object-acl',
-	    				#	'--bucket',
-	    				#	#'{}'.format(entry.replace('"', '')),
-	    				#	'{}'.format(entry.name),
-	    				#	'--profile',
-	    				#	'{}'.format(profile),
-	    				#	'--key',
-	    				#	'{}'.format(o.replace('"', '')),
-	    				#	'--acl',
-	    				#	'bucket-owner-full-control'
-	    				#], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-						#objacl = obj_acl.communicate()
+    return
 
-						clean = False
-						if "READ" in "{}".format(ovalue):
-							print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ............ {} contains an ACL with READ access for ALL USERS.".format(o)
-						if "WRITE" in "{}".format(ovalue):
-							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with WRITE access for ALL USERS.".format(o)
-						if "FULL_CONTROL" in "{}".format(ovalue):
-							print "[" + bcolors.FAIL + bcolors.BOLD + u"\u2716" + bcolors.ENDC + "] ............ {} contains an ACL with FULL CONTROL for ALL USERS.".format(o)
+def get_violating_buckets(bucket, s3_client):
 
-	#out = cut_s3.communicate(json_blob)[0].split('\n')
+    violating = False
 
-		bucket_policy =subprocess.Popen([
-    		'aws',
-    		's3api',
-    		'get-bucket-policy',
-    		'--bucket',
-    		#'{}'.format(entry.replace('"', '')),
-    		'{}'.format(entry.name),
-    		'--profile',
-    		'{}'.format(profile),
-    		'--output',
-    		'text',
-    		], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-		policy = bucket_policy.communicate()[0]
-		bps = subprocess.Popen([
-			'jq',
-			'.Statement[].Effect',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-		effect = bps.communicate(policy)[0].split('\n')
-		bps = subprocess.Popen([
-			'jq',
-			'.Statement[].Principal',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-		principal = bps.communicate(policy)[0].split('}\n{')
-		bps = subprocess.Popen([
-			'jq',
-			'.Statement[].Action',
-			], stdin=subprocess.PIPE, stdout = subprocess.PIPE, stderr=subprocess.STDOUT)
-		actions = bps.communicate(policy)[0].split('\n')
-		for e,p,a in zip(effect,principal,actions):
-			if "\"*\"" in p and "Allow" in e:
-				bpolicy = True
+    bucket_name = bucket.get('Name')
+    try:
+        bucket_acl = s3_client.get_bucket_acl(Bucket=bucket_name)
 
-				if "GetObject" in a:
-					clean = False
-					print "[" + bcolors.WARNING + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with READ access for ALL USERS.".format(entry.name)
-				if "PutObject" in a:
-					clean = False
-					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.".format(entry.name)
-				if "*" in a:
-					clean = False
-					print "[" + bcolors.FAIL + bcolors.BOLD + "!" + bcolors.ENDC + "] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.".format(entry.name)
+        if bucket_acl.get('Grants'):
+            for grant in bucket_acl.get('Grants'):
+                bucket_grantee = grant.get('Grantee')
+                if bucket_grantee.get('URI') and 'AllUsers' in bucket_grantee.get('URI'):
+                    bucket_permission = grant.get('Permission')
+                    if 'READ' in bucket_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with READ access for ALL USERS.'.format(bucket_name))
+                        violating = True
+                    if 'WRITE' in bucket_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with WRITE access for ALL USERS.'.format(bucket_name))
+                        violating = True
+                    if 'FULL_CONTROL' in bucket_permission:
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains an ACL with FULL CONTROL for ALL USERS.'.format(bucket_name))
+                        violating = True
 
-		if clean == True:
-			print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] Bucket enforces least privilege"
+                if bucket_grantee.get('URI') and 'AuthenticatedUsers' in bucket_grantee.get('URI'):
+                    bucket_permission = grant.get('Permission')
+                    auth_users = True
+                    print(bucket_permission)
+                    if 'READ' in bucket_permission:
+                        print('[' + bcolors.UNICODE_WARNING + '] ........ {} contains an ACL with READ access for users within the console.'.format(bucket_name))
+                        violating = True
+                    if 'WRITE' in bucket_permission:
+                        print('[' + bcolors.UNICODE_WARNING + '] ........ {} contains an ACL with WRITE access for users within the console.'.format(bucket_name))
+                        violating = True
+                    if 'FULL_CONTROL' in bucket_permission:
+                        print('[' + bcolors.UNICODE_WARNING_2 + '] ........ {} contains an ACL with FULL CONTROL access for users within the console.'.format(bucket_name))
+                        violating = True
+    except Exception as e:
+        if 'AccessDenied' in str(e):
+            print(bucket_name + ' could not be assessed due to an AccessDenied Error')
 
-		print ""
+    return violating
 
-	if bacl == False:
-		print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No S3 Buckets with public ACLs have been identified."
-		grade[0]+=10
-		grade[1]+=10
-	if bpolicy == False:
-		print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No S3 Buckets with public Bucket Policies have been identified."
-		grade[0]+=10
-		grade[1]+=10
+def get_violating_objects(bucket, s3_client):
+    bacl = False
+    violating_objs = []
+    list_of_objs = []
+    #print("i am doing things")
+    bucket_name = bucket.get('Name')
+    try:
+        bucket_obj_contents = s3_client.list_objects_v2(Bucket=bucket_name,MaxKeys=50).get('Contents')
 
-	print""
+        for obj in bucket_obj_contents:
+            if obj.get('Key'):
+                bucket_obj_dict = {
+                    'BucketName': bucket_name,
+                    'ObjectKey': obj.get('Key')
+                }
 
-	return
+                list_of_objs.append(bucket_obj_dict)
+    except Exception as e:
+        print('    ........ Could not find or access any objects')
 
-	#if out != '':
-		#print "[" + bcolors.FAIL + u"\u2716" + bcolors.ENDC + "] Public security groups identified. Please remediate immediately:"
-		#print "{}\n".format(out)
-		#if args.email:
-			#send_warning(profile, "Public security groups identified. Please remediate immediately.", out)
-	#else:
-		#print "[" + bcolors.OKGREEN + u"\u2713" + bcolors.ENDC + "] No security groups with public rules have been identified.\n"
-	#return
+    for obj in list_of_objs:
+        obj_key = obj.get('ObjectKey')
+        bucket_name = obj.get('BucketName')
+
+        try:
+            obj_acl = s3_client.get_object_acl(Bucket=bucket_name, Key=obj_key)
+        except Exception as e:
+            if 'AccessDenied' in str(e):
+                print(bucket_name + ' could not be assessed due to an AccessDenied Error')
+            continue
+
+        if obj_acl.get('Grants'):
+            for grant in obj_acl.get('Grants'):
+                obj_grantee = grant.get('Grantee')
+                if obj_grantee.get('URI') and 'AllUsers' in obj_grantee.get('URI'):
+                    obj_permission = grant.get('Permission')
+                    if 'READ' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with READ access for ALL USERS.'.format(obj_key))
+                    if 'WRITE' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with WRITE access for ALL USERS.'.format(obj_key))
+                    if 'FULL_CONTROL' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains an ACL with FULL CONTROL for ALL USERS.'.format(obj_key))
+
+                if obj_grantee.get('URI') and 'AuthenticatedUsers' in obj_grantee.get('URI'):
+                    obj_permission = grant.get('Permission')
+                    if 'READ' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with READ access for users within the console.'.format(obj_key))
+                    if 'WRITE' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL + '] ........ {} contains an ACL with WRITE access for users within the console.'.format(obj_key))
+                    if 'FULL_CONTROL' in obj_permission:
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains an ACL with FULL CONTROL for users within the console.'.format(obj_key))
+
+
+    return violating_objs
+
+def get_violating_bucket_policies(bucket, s3_client):
+    list_of_policies = []
+    clean = True
+    bucket_name = bucket.get('Name')
+    try:
+        policy = s3_client.get_bucket_policy(Bucket=bucket_name)
+    except Exception as e:
+        if 'The bucket policy does not exist' in str(e):
+            print('[' + bcolors.UNICODE_PASS_GREEN + '] Bucket does not contain a bucket policy.')
+        return
+
+    pol_dict = policy.get('Policy', {})
+    pol_statements = literal_eval(pol_dict).get('Statement')
+
+    for statement in pol_statements:
+        if 'IpAddress' in str(statement):
+            print('Access restricted to {}'.format(statement.get('Condition').get('IpAddress').get('aws:SourceIp')))
+        if isinstance(statement.get('Principal'), list):
+            if any('*' in  p for p in statement.get('Principal')) and 'Allow' in statement.get('Effect'):
+                bpolicy = True
+
+                if isinstance(statement.get('Action'), list):
+
+                    if any('GetObject' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_WARNING_2 + '] ........ {} contains a Bucket Policy with READ access for ALL USERS.'.format(bucket_name))
+                    if any('PutObject' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.'.format(bucket_name))
+                    if any('*' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.'.format(bucket_name))
+                else:
+                    if 'GetObject' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_WARNING_2 + '] ........ {} contains a Bucket Policy with READ access for ALL USERS.'.format(bucket_name))
+                    if 'PutObject' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.'.format(bucket_name))
+                    if '*' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.'.format(bucket_name))
+        else:
+            if '*' in statement.get('Principal') and 'Allow' in statement.get('Effect'):
+                bpolicy = True
+
+                if isinstance(statement.get('Action'), list):
+
+                    if any('GetObject' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_WARNING_2 + '] ........ {} contains a Bucket Policy with READ access for ALL USERS.'.format(bucket_name))
+                    if any('PutObject' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.'.format(bucket_name))
+                    if any('*' in a for a in statement.get('Action')):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.'.format(bucket_name))
+                else:
+                    if 'GetObject' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_WARNING_2 + '] ........ {} contains a Bucket Policy with READ access for ALL USERS.'.format(bucket_name))
+                    if 'PutObject' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with WRITE access for ALL USERS.'.format(bucket_name))
+                    if '*' in statement.get('Action'):
+                        clean = False
+                        print('[' + bcolors.UNICODE_FAIL_2 + '] ........ {} contains a Bucket Policy with FULL CONTROL for ALL USERS.'.format(bucket_name))
+
+    if clean == True:
+        print('[' + bcolors.UNICODE_PASS_GREEN + '] Bucket enforces least privilege')
+
+    return not clean

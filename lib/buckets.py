@@ -4,6 +4,39 @@ from ast import literal_eval
 
 #CLIENT = boto3.client('s3')
 
+
+def check_encryption(s3_client, bucket_name):
+    try:
+        response = s3_client.get_bucket_encryption(Bucket='{}'.format(bucket_name))
+        print('[' + bcolors.UNICODE_PASS_GREEN \
+        + '] Bucket uses server side encryption with the algorithm {}'.format(response.get('ServerSideEncryptionConfiguration').get('Rules')[0].get('ApplyServerSideEncryptionByDefault').get('SSEAlgorithm')))
+    except Exception as e:
+        if 'AccessDenied' in str(e):
+            print('[' + bcolors.UNICODE_WARNING_2 + '] Access was denied.')
+        elif 'ServerSideEncryptionConfigurationNotFoundError' in str(e):
+            print('[' + bcolors.UNICODE_WARNING_2 + '] Encryption is not enabled.')
+        else:
+            print(e)
+    try:
+        bucket_logging = s3_client.get_bucket_logging(Bucket='{}'.format(bucket_name))
+        if 'LoggingEnabled' not in str(bucket_logging):
+            print('[' + bcolors.UNICODE_WARNING_2 + '] Logging is not enabled.')
+        else:
+            print('[' + bcolors.UNICODE_PASS_GREEN \
+            + '] Bucket logging is enabled with target {}'.format(bucket_logging.get('LoggingEnabled').get('TargetBucket')))
+    except Exception as e:
+        print(e)
+
+    try:
+        bucket_versioning = s3_client.get_bucket_versioning(Bucket='{}'.format(bucket_name))
+        if 'Enabled' not in str(bucket_versioning):
+            print('[' + bcolors.UNICODE_WARNING_2 + '] Versioning is not enabled.')
+        else:
+            print('[' + bcolors.UNICODE_PASS_GREEN \
+            + '] Bucket versioning is enabled.')
+    except Exception as e:
+        print(e)
+
 #######################################################################
                     #Identify S3 Buckets#
 #######################################################################
@@ -35,8 +68,11 @@ def output_buckets(profile, region):
     violating_objects = []
     for bucket in all_buckets:
         print('Checking https://s3.amazonaws.com/' + bucket.get('Name'))
+        check_encryption(s3_client, bucket.get('Name'))
         acl = get_violating_buckets(bucket, s3_client)
         policy = get_violating_bucket_policies(bucket, s3_client)
+
+        print('    Sampling bucket ACLs...')
         if acl or policy:
             violating_buckets.append(bucket)
             try:

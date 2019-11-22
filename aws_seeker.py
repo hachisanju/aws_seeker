@@ -85,7 +85,7 @@ def list_ec2(ec2_list):
                 ec2.output_summary()
                 ec2.output_details()
         print ("Input 'back' to go back.")
-        print("Input 'exit' to terminate.\n")
+        #print("Input 'exit' to terminate.\n")
         action = raw_input(">>> ")
 
 #######################################################################
